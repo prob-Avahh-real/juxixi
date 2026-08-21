@@ -1,0 +1,17 @@
+{
+  "appId": "com.skat.juxixi",
+  "appName": "剧西西",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0d0b14"
+    }
+  }
+}

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0d0b14" />
+  <title>剧西西 · 西语追剧学西语</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0b14;
+      --panel: #16121f;
+      --panel-2: #1f1a2e;
+      --ink: #f2ecf8;
+      --muted: #9b8fad;
+      --accent: #e50914;
+      --accent-2: #7c5cff;
+      --gold: #f5c542;
+      --ok: #4ade80;
+      --err: #fb7185;
+      --line: rgba(242, 236, 248, 0.08);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --font: "Outfit", "PingFang SC", sans-serif;
+      --display: "Source Serif 4", Georgia, serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      font-family: var(--font);
+      color: var(--ink);
+      background: var(--bg);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background:
+        radial-gradient(70% 50% at 0% 0%, rgba(124, 92, 255, 0.15), transparent 55%),
+        radial-gradient(55% 40% at 100% 10%, rgba(229, 9, 20, 0.12), transparent 50%),
+        linear-gradient(180deg, #08060d 0%, var(--bg) 100%);
+    }
+
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      padding: calc(12px + var(--safe-top)) 16px calc(20px + var(--safe-bottom));
+    }
+
+    .hero { margin-bottom: 14px; }
+    .hero h1 {
+      font-family: var(--display);
+      font-size: 1.85rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .tabs button {
+      flex: 1;
+      background: var(--panel-2);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 6px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .tabs button.active {
+      background: rgba(229, 9, 20, 0.18);
+      color: var(--ink);
+      border-color: rgba(229, 9, 20, 0.4);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .toolbar button, .toolbar label.btn {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .toolbar button.active {
+      border-color: var(--accent-2);
+      color: var(--accent-2);
+    }
+    .toolbar label.btn input { display: none; }
+
+    .device-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      display: inline-block;
+    }
+    .dot.active { background: var(--ok); }
+    .dot.listening { background: var(--gold); animation: pulse 1s infinite; }
+    .dot.command { background: var(--accent-2); }
+    @keyframes pulse { 50% { opacity: 0.5; } }
+
+    .status {
+      min-height: 1.2em;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .status.ok { color: var(--ok); }
+    .status.warn { color: var(--gold); }
+    .status.err { color: var(--err); }
+    .status.busy { color: var(--accent-2); }
+
+    #catalog-stats {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .show-card {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      text-align: left;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 8px;
+      color: inherit;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .show-card:hover { border-color: rgba(124, 92, 255, 0.35); }
+    .show-emoji { font-size: 2rem; line-height: 1; }
+    .show-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .show-meta strong { font-size: 0.95rem; }
+    .show-zh { color: var(--accent-2); font-size: 0.82rem; }
+    .show-tags { font-size: 0.75rem; color: var(--muted); }
+    .show-blurb { font-size: 0.78rem; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+    .show-count { font-size: 0.72rem; color: var(--gold); margin-top: 4px; }
+
+    #scene-picker h3 {
+      font-size: 0.88rem;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+    .scene-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      color: var(--ink);
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .chip span { color: var(--muted); margin-left: 4px; font-size: 0.7rem; }
+    .chip.active {
+      background: rgba(229, 9, 20, 0.2);
+      border-color: rgba(229, 9, 20, 0.45);
+    }
+
+    .theater {
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+    .theater-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+    }
+    .scene-title { color: var(--gold); }
+    .video-slot { min-height: 120px; background: #050508; position: relative; }
+    .video-placeholder {
+      display: grid;
+      place-items: center;
+      min-height: 120px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+    .local-video { width: 100%; max-height: 200px; display: block; }
+    .progress {
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+    .subtitle-box { padding: 16px 14px 12px; }
+    .speaker {
+      font-size: 0.72rem;
+      color: var(--accent-2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .line-es {
+      font-size: 1.05rem;
+      line-height: 1.45;
+      font-weight: 500;
+    }
+    .line-zh {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .line-vocab {
+      padding: 0 14px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .tag {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(124, 92, 255, 0.2);
+      color: var(--accent-2);
+    }
+    .line-nav {
+      padding: 0 14px 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .flash {
+      perspective: 800px;
+      min-height: 160px;
+      cursor: pointer;
+      position: relative;
+    }
+    .flash .face {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 24px 16px;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .flash.flipped .front { display: none; }
+    .flash:not(.flipped) .back { display: none; }
+    .flash-es { font-size: 1.2rem; font-weight: 600; }
+    .flash-zh { font-size: 1.1rem; color: var(--gold); }
+    .flash-hint, .flash-note { font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+    .srs-stats { text-align: center; font-size: 0.78rem; color: var(--muted); margin: 10px 0; }
+    .grade-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .grade-row button {
+      padding: 10px 4px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-family: inherit;
+    }
+
+    .quiz-q { font-size: 0.95rem; line-height: 1.45; margin-bottom: 12px; }
+    .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+    .quiz-opt {
+      text-align: left;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 0.88rem;
+    }
+    .quiz-opt.correct { border-color: var(--ok); background: rgba(74, 222, 128, 0.12); }
+    .quiz-opt.wrong { border-color: var(--err); background: rgba(251, 113, 133, 0.1); }
+    .quiz-explain { margin-top: 10px; font-size: 0.82rem; color: var(--muted); }
+    .quiz-score { margin-top: 10px; font-size: 0.82rem; color: var(--gold); }
+
+    .empty { color: var(--muted); font-size: 0.88rem; text-align: center; padding: 24px 8px; }
+
+    .learn-dash {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .dash-cell {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 6px;
+      text-align: center;
+    }
+    .dash-num { display: block; font-size: 1.1rem; font-weight: 600; color: var(--gold); }
+    .dash-label { font-size: 0.68rem; color: var(--muted); }
+
+    .practice-label {
+      font-size: 0.75rem;
+      color: var(--accent-2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .practice-box { min-height: 140px; }
+    .shadow-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      background: rgba(229, 9, 20, 0.25);
+      border: 1px solid rgba(229, 9, 20, 0.5);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .feedback-badge {
+      font-size: 0.82rem;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+    .feedback-badge.ok { background: rgba(74, 222, 128, 0.15); color: var(--ok); }
+    .feedback-badge.warn { background: rgba(245, 197, 66, 0.15); color: var(--gold); }
+    .word-ok { color: var(--ok); text-decoration: underline; text-underline-offset: 3px; }
+    .word-missed { color: var(--err); background: rgba(251, 113, 133, 0.15); border-radius: 4px; padding: 0 2px; }
+    .feedback-line { line-height: 1.6; }
+    .tpr-cue {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 8px 10px;
+      background: rgba(124, 92, 255, 0.12);
+      border-radius: 8px;
+    }
+    .line-stats { margin-top: 10px; font-size: 0.72rem; color: var(--muted); }
+    .output-input {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+    .immersive-theater { border-color: var(--accent); }
+
+    body.immersive .hero,
+    body.immersive .tabs,
+    body.immersive #watch-tools,
+    body.immersive #vocab-tools,
+    body.immersive .device-row,
+    body.immersive .hero + .tabs + .toolbar,
+    body.immersive section.panel:not(#panel-practice) {
+      display: none !important;
+    }
+    body.immersive .app { max-width: 100%; padding-top: var(--safe-top); }
+    body.immersive #practice-tools {
+      position: fixed;
+      bottom: calc(8px + var(--safe-bottom));
+      left: 8px;
+      right: 8px;
+      z-index: 10;
+      background: rgba(13, 11, 20, 0.92);
+      border-radius: 12px;
+      padding: 8px;
+      margin: 0;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--ink);
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+
+    /* Watch layout */
+    @media (max-width: 280px), (max-height: 300px) {
+      .hero h1 { font-size: 1.2rem; }
+      .hero p { display: none; }
+      .tabs button { font-size: 0.7rem; padding: 8px 4px; }
+      .line-es { font-size: 0.9rem; }
+      .show-blurb { display: none; }
+    }
+
+    body.glasses-mode .hero p,
+    body.glasses-mode .show-blurb,
+    body.glasses-mode .device-row { display: none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <h1>剧<span>西西</span></h1>
+      <p>通过西语影视剧学西语 · 追剧 · 刻意练习 · 闪卡</p>
+    </header>
+
+    <nav class="tabs" id="mode-tabs" aria-label="学习模式">
+      <button type="button" data-mode="shows" class="active">剧目</button>
+      <button type="button" data-mode="watch">追剧</button>
+      <button type="button" data-mode="practice">练习</button>
+      <button type="button" data-mode="vocab">闪卡</button>
+      <button type="button" data-mode="quiz">测验</button>
+    </nav>
+
+    <div class="toolbar" id="watch-tools" hidden>
+      <button type="button" id="btn-prev">上一句</button>
+      <button type="button" id="btn-next">下一句</button>
+      <button type="button" id="btn-speak">朗读</button>
+      <button type="button" id="btn-sub">字幕</button>
+      <button type="button" id="btn-autoplay">连播</button>
+      <label class="btn">导入视频<input type="file" id="video-import" accept="video/*" /></label>
+      <button type="button" class="mic-pronounce">跟读</button>
+    </div>
+
+    <div class="toolbar" id="practice-tools" hidden>
+      <button type="button" data-practice="shadow" class="active">影子跟读</button>
+      <button type="button" data-practice="weak">弱项重练</button>
+      <button type="button" id="btn-output-fill">填空</button>
+      <button type="button" id="btn-output-retell">复述</button>
+      <button type="button" id="btn-immersive">沉浸剧场</button>
+      <button type="button" id="btn-practice-prev">上一句</button>
+      <button type="button" id="btn-practice-next">下一句</button>
+      <button type="button" class="mic-pronounce">跟读</button>
+    </div>
+
+    <div class="toolbar" id="vocab-tools" hidden>
+      <select id="vocab-filter" aria-label="按剧集筛选">
+        <option value="">全部剧集</option>
+        <option value="lcdp">纸钞屋</option>
+        <option value="elite">名校风暴</option>
+        <option value="visavis">面对面</option>
+        <option value="narcos">毒枭</option>
+        <option value="flores">花之屋</option>
+        <option value="cable">接线女孩</option>
+      </select>
+      <button type="button" class="mic-pronounce">跟读</button>
+    </div>
+
+    <section class="panel" id="panel-shows">
+      <p id="catalog-stats"></p>
+      <div id="show-list"></div>
+      <div id="scene-picker" style="margin-top:12px"></div>
+    </section>
+
+    <section class="panel" id="panel-watch" hidden>
+      <div id="watch-stage"></div>
+    </section>
+
+    <section class="panel" id="panel-practice" hidden>
+      <div id="practice-stage"></div>
+    </section>
+
+    <section class="panel" id="panel-vocab" hidden>
+      <div id="vocab-panel"></div>
+    </section>
+
+    <section class="panel" id="panel-quiz" hidden>
+      <div id="quiz-panel"></div>
+    </section>
+
+    <section class="panel">
+      <div class="device-row">
+        <span id="glasses-dot" class="dot" title="智能眼镜"></span> 眼镜
+        <span id="mic-dot" class="dot" title="智能麦克风"></span> 麦克风
+        <span id="headphone-dot" class="dot" title="智能耳机"></span> 耳机
+        <button type="button" id="smart-enable">启用眼镜/麦克风/耳机</button>
+        <button type="button" id="wearable-enable">启用戒指/手杖</button>
+      </div>
+      <p class="status" id="status"></p>
+      <p style="margin-top:8px;font-size:0.72rem;color:var(--muted);line-height:1.45">
+        👓 眼镜语音：下一个 / 朗读 / 跟读 / 练习 / 字幕 / 闪卡 / 测验<br />
+        💍 戒指：左右翻句 · 下倾跟读 · 上倾字幕 · 晃动复述/刷新弱项<br />
+        🦯 手杖：敲击开始跟读 · TPR 动作确认关键词<br />
+        🎧 耳机线控：上一曲/下一曲翻句 · 播放/暂停朗读
+      </p>
+    </section>
+  </div>
+
+  <script src="js/wearable-input.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

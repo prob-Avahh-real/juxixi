@@ -1,0 +1,25 @@
+{
+  "name": "juxixi",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "剧西西：通过西语影视剧学西语。iOS / Android / 手表 / 智能戒指手杖",
+  "scripts": {
+    "build": "node scripts/build-web.js",
+    "start": "npm run build && npx --yes serve www -p 5182",
+    "test": "node --test test/*.test.js",
+    "sync:android": "npm run build && npx cap sync android",
+    "open:android": "npx cap open android",
+    "apk:debug": "npm run sync:android && cd android && node ../../tools/run-gradle-android.mjs assembleDebug",
+    "mobile:android": "npm run sync:android && npm run open:android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/status-bar": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0",
+    "esbuild": "^0.24.0"
+  }
+}
