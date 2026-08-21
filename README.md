@@ -70,11 +70,27 @@ npm start          # http://localhost:5182
 
 ## 移动端打包
 
+### Android
+
 ```bash
 npx cap add android    # 首次
 npm run sync:android
-npm run apk:debug
+npm run apk:debug      # 需 JDK 17
 ```
+
+### iPhone / iPad（iOS）
+
+前置：**macOS**、**Xcode 15+**（模拟器无需付费开发者账号；真机需 Apple ID 签名）。
+
+```bash
+npx cap add ios        # 首次（仓库已含 ios/ 可跳过）
+npm run sync:ios
+npm run mobile:ios     # 打开 Xcode → 选 iPhone 或 iPad 模拟器 → Run
+```
+
+首次在设备/模拟器上使用时，请允许 **麦克风**、**语音识别** 与 **运动与健身**（戒指/手杖手势）权限。
+
+iPad 上剧目列表为双栏布局，沉浸练习模式在横屏下会为底部工具栏留出字幕空间。
 
 修改 `index.html` 或 `src/` 后先 `npm run build`，再 `npx cap sync`。
 
@@ -97,6 +113,7 @@ src/
 test/
   catalog.test.js
   learning.test.js
+  ios-platform.test.js
 ```
 
 ## 说明

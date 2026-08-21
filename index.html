@@ -436,6 +436,35 @@
       margin-bottom: 10px;
     }
 
+    /* iPad / tablet layout */
+    @media (min-width: 768px) {
+      .app { max-width: min(960px, 90vw); }
+      .hero h1 { font-size: 2.1rem; }
+      #show-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      #show-list .show-card { margin-bottom: 0; }
+      .line-es { font-size: 1.2rem; }
+      .line-zh { font-size: 1rem; }
+      .toolbar { gap: 10px; }
+      .toolbar button, .toolbar label.btn { padding: 10px 14px; font-size: 0.88rem; }
+      .subtitle-box { padding: 20px 18px 14px; }
+      .theater .video-slot { min-height: 180px; }
+      body.immersive #practice-tools {
+        max-width: 720px;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: calc(100% - 32px);
+      }
+    }
+
+    @media (min-width: 768px) and (orientation: landscape) {
+      body.immersive .subtitle-box { padding-bottom: calc(72px + var(--safe-bottom)); }
+    }
+
     /* Watch layout */
     @media (max-width: 280px), (max-height: 300px) {
       .hero h1 { font-size: 1.2rem; }

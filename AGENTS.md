@@ -2,6 +2,14 @@
 
 西语影视剧学习应用。构建：`npm run build` · 测试：`npm test` · 端口：5182
 
+## Target
+
+| 平台 | 状态 |
+|------|------|
+| iPhone / iPad | Capacitor iOS · `npm run mobile:ios` |
+| Android | Capacitor · `npm run mobile:android` |
+| 手表 / 戒指 / 手杖 | 可选（Web 传感器 + 窄屏 CSS） |
+
 ## Harness / Loop（助手）
 
 - 遵循根 `/Users/skat/AGENTS.md`：**Harness Engineering** + **Loop Engineering**
@@ -13,10 +21,12 @@
 
 ```bash
 npm install
-npm test          # 若有
-npm run build     # 或 build:web
+npm test
+npm run build
 npx cap sync android   # 若有 android/
-# 可选：JAVA_HOME=…/openjdk@17 npm run apk:debug
+npx cap sync ios       # 若有 ios/
+# Android APK：JAVA_HOME=…/openjdk@17 npm run apk:debug
+# iOS 模拟器/真机：npm run mobile:ios（需 Mac + Xcode）
 ```
 
-**Done 示例**：测试通过（若有）+ web 产物进 `www/`/`dist/` + `cap sync` 无报错。可选穿戴未做可搁置，不纳入强制 Done。
+**Done 示例**：测试通过 + web 产物进 `www/` + `cap sync android` 与 `cap sync ios` 无报错。Xcode Run 为 iOS 真机验收项。
