@@ -465,6 +465,49 @@
       body.immersive .subtitle-box { padding-bottom: calc(72px + var(--safe-bottom)); }
     }
 
+    /* iPad landscape: two-pane layout for watch / practice, sticky left rail */
+    @media (min-width: 1024px) and (orientation: landscape) {
+      body:not(.glasses-mode) #panel-watch,
+      body:not(.glasses-mode) #panel-practice {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 20px;
+        align-items: start;
+      }
+      body:not(.glasses-mode) #panel-watch > #watch-stage,
+      body:not(.glasses-mode) #panel-practice > #practice-stage {
+        min-width: 0;
+      }
+      body:not(.glasses-mode) #scene-picker {
+        position: sticky;
+        top: 12px;
+        max-height: calc(100vh - 24px);
+        overflow-y: auto;
+        padding-right: 8px;
+        margin-top: 0;
+      }
+      body:not(.glasses-mode) #scene-picker .scene-chips {
+        flex-direction: column;
+        gap: 6px;
+      }
+      body:not(.glasses-mode) #scene-picker .chip {
+        width: 100%;
+        justify-content: flex-start;
+        text-align: left;
+      }
+      body:not(.glasses-mode) #scene-picker .chip span {
+        margin-left: auto;
+      }
+      body:not(.glasses-mode) .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: var(--bg, #0d0b14);
+        padding: 8px 0;
+        margin-bottom: 8px;
+      }
+    }
+
     /* Watch layout */
     @media (max-width: 280px), (max-height: 300px) {
       .hero h1 { font-size: 1.2rem; }
@@ -535,10 +578,12 @@
     </section>
 
     <section class="panel" id="panel-watch" hidden>
+      <aside class="scene-rail" id="watch-rail" aria-label="场景侧栏"></aside>
       <div id="watch-stage"></div>
     </section>
 
     <section class="panel" id="panel-practice" hidden>
+      <aside class="scene-rail" id="practice-rail" aria-label="场景侧栏"></aside>
       <div id="practice-stage"></div>
     </section>
 

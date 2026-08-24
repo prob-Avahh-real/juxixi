@@ -9,6 +9,7 @@ import { buildQuiz } from './quiz.js';
 import { speakLine, stopSpeak, scheduleLine, lineIndexAtTime } from './player.js';
 import { initSmartDevices } from './smart-devices.js';
 import { analyzePronunciation, highlightLine } from './pronunciation.js';
+import { attachKeyboard } from './keyboard.js';
 import {
   loadPracticeStats, savePracticeStats, recordLinePractice, weakLineQueue,
   shouldAdvanceWeakQueue, buildFillBlank, checkFillBlank, checkRetell,
@@ -258,23 +259,26 @@ function renderShows() {
   }).join('');
 
   const scenePanel = $('#scene-picker');
-  if (scenePanel) {
-    const scenes = showFilter ? scenesForShow(showFilter) : SCENES;
-    scenePanel.innerHTML = `
-      <h3>${showFilter ? (getShow(showFilter)?.titleZh ?? '') + ' · 选场景' : '全部场景'}</h3>
-      <div class="scene-chips">
-        ${scenes.map((sc) => `
-          <button type="button" class="chip ${sc.id === sceneId ? 'active' : ''}" data-scene="${sc.id}">
-            ${sc.titleZh}<span>${sc.level}</span>
-          </button>`).join('')}
-      </div>`;
-  }
+  if (scenePanel) scenePanel.innerHTML = buildScenePickerHtml();
 
   $('#catalog-stats')?.replaceChildren();
   const statNode = $('#catalog-stats');
   if (statNode) {
     statNode.textContent = `${statsEl.shows} 部剧 · ${statsEl.scenes} 场景 · ${statsEl.words} 词条`;
   }
+}
+
+/** @returns {string} scene-picker innerHTML, shared by shows panel + iPad side rail */
+function buildScenePickerHtml() {
+  const scenes = showFilter ? scenesForShow(showFilter) : SCENES;
+  return `
+    <h3>${showFilter ? (getShow(showFilter)?.titleZh ?? '') + ' · 选场景' : '全部场景'}</h3>
+    <div class="scene-chips">
+      ${scenes.map((sc) => `
+        <button type="button" class="chip ${sc.id === sceneId ? 'active' : ''}" data-scene="${sc.id}">
+          ${sc.titleZh}<span>${sc.level}</span>
+        </button>`).join('')}
+    </div>`;
 }
 
 function renderWatch() {
@@ -806,5 +810,54 @@ if ('speechSynthesis' in window) {
 }
 
 bindUI();
+
+// Keyboard shortcuts (desktop / iPad-with-keyboard).
+// Strategy: dispatch is the only place that knows about app.js internals;
+// keyboard.js stays a pure resolver + listener binder.
+attachKeyboard(window, {
+  getMode: () => mode,
+  dispatch: (action) => {
+    switch (action) {
+      case 'prev': step(-1); break;
+      case 'next': step(1); break;
+      case 'speak': speak(); break;
+      case 'sub': toggleSub(); break;
+      case 'autoplay':
+        autoPlay = !autoPlay;
+        $('#btn-autoplay')?.classList.toggle('active', autoPlay);
+        if (autoPlay) playCurrentLine();
+        else stopSpeakAction();
+        break;
+      case 'immersive':
+        immersive = !immersive;
+        $('#btn-immersive')?.classList.toggle('active', immersive);
+        render();
+        break;
+      case 'shadow': if (mode === 'practice') startShadowing(); break;
+      case 'fill': if (mode === 'practice') startOutputFill(); break;
+      case 'retell': if (mode === 'practice') startOutputRetell(); break;
+      case 'flip':
+        vocabFlipped = !vocabFlipped;
+        renderVocab();
+        break;
+      case 'again': if (mode === 'vocab') grade('again'); break;
+      case 'hard': if (mode === 'vocab') grade('hard'); break;
+      case 'good': if (mode === 'vocab') grade('good'); break;
+      case 'easy': if (mode === 'vocab') grade('easy'); break;
+      case 'pick-1': case 'pick-2': case 'pick-3': case 'pick-4': {
+        if (mode !== 'quiz') break;
+        const pick = Number(action.slice(-1)) - 1;
+        const q = quizItems[quizIdx];
+        if (!q || quizPicked >= 0) break;
+        quizPicked = pick;
+        if (pick === q.answer) quizScore += 1;
+        renderQuiz();
+        break;
+      }
+      default: break;
+    }
+  },
+});
+
 refreshVocabQueue();
 render();
