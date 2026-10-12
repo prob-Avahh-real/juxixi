@@ -4,11 +4,11 @@
 
 | # | 切片 | 验证 |
 |---|------|------|
-| F | 首次提交：整理 `.gitignore` / 不入产物 + `git commit` 一次 | `git log -1` |
-| A | iOS 工程可装：补 Info.plist iPad 朝向键 / `cap sync` 跑通 | `npm test` 全绿 + `npx cap sync ios` 无错 |
-| D | iPad/横屏深化：分栏布局 + 键盘快捷键 + CSS 补齐 | 测试 + `npm run build` + 视觉规则断言 |
-| C | 练习机制深化：错题本导出 + 复习会话队列 + 跟读超时 | 新单元测试 + build 通过 |
-| G | 离线 PWA：manifest + service worker（追剧模式离线可用） | 测试断言文件存在 + 缓存命中 |
+| F | 首次提交：整理 `.gitignore` / 不入产物 + `git commit` 一次 | `git log -1` ✅ |
+| A | iOS 工程可装：补 Info.plist iPad 朝向键 / `cap sync` 跑通 | `npm test` 全绿 + `npx cap sync ios` 无错 ✅ |
+| D | iPad/横屏深化：分栏布局 + 键盘快捷键 + CSS 补齐 | 测试 + `npm run build` + 视觉规则断言 ✅ |
+| C | 练习机制深化：错题本导出 + 复习会话队列 + 跟读超时 | 新单元测试 + build 通过 ✅ |
+| G | 离线 PWA：manifest + service worker（追剧模式离线可用） | 测试断言文件存在 + 缓存命中 ✅ |
 
 ## Done 定义
 

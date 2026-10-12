@@ -14,6 +14,7 @@ import {
   loadPracticeStats, savePracticeStats, recordLinePractice, weakLineQueue,
   shouldAdvanceWeakQueue, buildFillBlank, checkFillBlank, checkRetell,
   getTprCue, tprGestureMatches, lineIdsForScene,
+  isShadowTimedOut, reviewQueue, exportMistakesJson,
 } from './learning.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -40,6 +41,7 @@ let quizScore = 0;
 let practiceSubMode = 'shadow';
 let immersive = false;
 let shadowPhase = 'idle';
+let shadowStartedAt = 0;
 /** @type {{ passed: boolean, missed: string[], matched: string[], spoken: string } | null} */
 let shadowFeedback = null;
 let weakQueue = [];
@@ -137,6 +139,26 @@ function learningDashboard() {
   const lineIds = sc ? lineIdsForScene(sc) : SCENES.flatMap((s) => lineIdsForScene(s));
   const vocabIds = filterVocab(showFilter || undefined).map((v) => v.id);
   return dashboardStats({ lineIds, vocabIds, srs, streak });
+}
+
+function downloadText(filename, text, mime = 'application/json') {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportMistakesBook() {
+  const json = exportMistakesJson(practiceStats, SCENES);
+  const count = JSON.parse(json).count;
+  const stamp = new Date().toISOString().slice(0, 10);
+  downloadText(`juxixi-mistakes-${stamp}.json`, json);
+  setStatus(count ? `✅ 已导出错题本（${count} 句）` : '没有错题，继续保持', count ? 'ok' : '');
 }
 
 function refreshVocabQueue() {
@@ -397,12 +419,18 @@ function renderPracticeDashboard() {
   const dash = learningDashboard();
   const lineId = currentLineId();
   const ps = lineId ? practiceStats[lineId] : null;
+  const sc = currentScene();
+  const review = sc ? reviewQueue(sc, practiceStats, srs) : [];
   return `
     <div class="learn-dash">
       <div class="dash-cell"><span class="dash-num">${dash.dueLines}</span><span class="dash-label">待练台词</span></div>
       <div class="dash-cell"><span class="dash-num">${dash.dueWords}</span><span class="dash-label">待复习词</span></div>
+      <div class="dash-cell"><span class="dash-num">${review.length}</span><span class="dash-label">本场景待复习</span></div>
       <div class="dash-cell"><span class="dash-num">${dash.streak}</span><span class="dash-label">连续天数</span></div>
       ${ps ? `<div class="dash-cell"><span class="dash-num">${ps.passes}/${ps.attempts}</span><span class="dash-label">本句通过</span></div>` : ''}
+    </div>
+    <div class="dash-actions">
+      <button type="button" class="btn-primary" id="btn-export-mistakes">导出错题本</button>
     </div>`;
 }
 
@@ -472,6 +500,7 @@ function renderPractice() {
     </div>`;
 
   $('#btn-shadow-start')?.addEventListener('click', () => startShadowing());
+  $('#btn-export-mistakes')?.addEventListener('click', () => exportMistakesBook());
   $('#btn-check-fill')?.addEventListener('click', () => checkFillAnswer());
   $('#fill-input')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') checkFillAnswer();
@@ -500,16 +529,35 @@ function startShadowing() {
   const line = currentLine();
   if (!line) return;
   shadowPhase = 'playing';
+  shadowStartedAt = Date.now();
   shadowFeedback = null;
   renderPractice();
   stopSpeak();
   setStatus('先听示范…', 'busy');
   speakLine(line.es, () => {
+    if (isShadowTimedOut(shadowStartedAt)) {
+      handleShadowTimeout();
+      return;
+    }
     shadowPhase = 'listening';
     renderPractice();
     setStatus('跟着说…', 'busy');
     smartDevices?.startMicPronounce(line.es, handleShadowResult);
   });
+}
+
+function handleShadowTimeout() {
+  const line = currentLine();
+  shadowFeedback = {
+    passed: false,
+    missed: line ? line.es.split(/\s+/) : [],
+    matched: [],
+    spoken: '',
+  };
+  shadowPhase = 'feedback';
+  feedShadowSrs(false);
+  setStatus('⏱ 跟读超时，再试一次', 'warn');
+  renderPractice();
 }
 
 function handleShadowResult(spoken, ok) {

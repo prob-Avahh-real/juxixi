@@ -11,6 +11,7 @@ import {
 import {
   recordLinePractice, weakLineQueue, buildFillBlank, checkFillBlank,
   checkRetell, getTprCue, tprGestureMatches, shouldAdvanceWeakQueue,
+  reviewQueue, exportMistakes, exportMistakesJson, isShadowTimedOut, SHADOW_TIMEOUT_MS,
 } from '../src/learning.js';
 
 describe('pronunciation', () => {
@@ -86,6 +87,59 @@ describe('learning', () => {
   it('shouldAdvanceWeakQueue only on pass', () => {
     assert.equal(shouldAdvanceWeakQueue(true), true);
     assert.equal(shouldAdvanceWeakQueue(false), false);
+  });
+
+  it('reviewQueue tags reasons and orders by weight', () => {
+    const id0 = srsIdForLine(scene.id, 0);
+    const id1 = srsIdForLine(scene.id, 1);
+    const stats = {
+      [id0]: { attempts: 1, passes: 1, fails: 0 },        // passed → only SRS due
+      [id1]: { attempts: 2, passes: 0, fails: 2 },        // never-passed + high-fail
+    };
+    const srs = {
+      [id0]: { reps: 1, nextReview: 0, lapses: 0 },       // srs-due (weight 2)
+    };
+    const q = reviewQueue(scene, stats, srs);
+    // line1: never-passed(3)+high-fail(2)=5 · line2: never-passed(3) · line0: srs-due(2)
+    assert.equal(q[0].lineIdx, 1);
+    assert.ok(q[0].reason.includes('never-passed'));
+    assert.ok(q[0].reason.includes('high-fail'));
+    const entry0 = q.find((r) => r.lineIdx === 0);
+    assert.ok(entry0);
+    assert.ok(entry0.reason.includes('srs-due'));
+    assert.ok(!entry0.reason.includes('never-passed'));
+    const entry2 = q.find((r) => r.lineIdx === 2);
+    assert.equal(entry2.reason, 'never-passed');
+  });
+
+  it('exportMistakes lists only failed lines, sorted by fails desc', () => {
+    const id0 = srsIdForLine(scene.id, 0);
+    const id1 = srsIdForLine(scene.id, 1);
+    let stats = recordLinePractice({}, id0, false);
+    stats = recordLinePractice(stats, id0, true); // fails=1
+    stats = recordLinePractice(stats, id1, false);
+    stats = recordLinePractice(stats, id1, false); // fails=2
+    const out = exportMistakes(stats, [scene]);
+    assert.equal(out.length, 2);
+    assert.equal(out[0].lineIdx, 1);
+    assert.equal(out[0].fails, 2);
+    assert.equal(out[0].sceneTitle, scene.titleZh);
+    assert.equal(out[1].fails, 1);
+  });
+
+  it('exportMistakesJson wraps metadata with a count', () => {
+    const id0 = srsIdForLine(scene.id, 0);
+    const stats = recordLinePractice({}, id0, false);
+    const parsed = JSON.parse(exportMistakesJson(stats, [scene], 0));
+    assert.equal(parsed.app, 'juxixi');
+    assert.equal(parsed.count, 1);
+    assert.equal(parsed.mistakes[0].lineIdx, 0);
+  });
+
+  it('isShadowTimedOut respects SHADOW_TIMEOUT_MS', () => {
+    assert.equal(isShadowTimedOut(0, 0), false);
+    assert.equal(isShadowTimedOut(0, SHADOW_TIMEOUT_MS - 1), false);
+    assert.equal(isShadowTimedOut(0, SHADOW_TIMEOUT_MS), true);
   });
 });
 

@@ -143,3 +143,94 @@ export function tprGestureMatches(gestureName, detail, cue) {
   if (cue.gesture === 'tilt-right' && gestureName === 'tilt' && detail?.dir === 'right') return true;
   return false;
 }
+
+// ---------------------------------------------------------------------------
+// 里程碑 C：错题本导出 / 复习会话队列 / 跟读超时
+// ---------------------------------------------------------------------------
+
+/** 影子跟读：从开始示范到结果返回的最长等待（毫秒），超时判失败。 */
+export const SHADOW_TIMEOUT_MS = 15_000;
+
+/**
+ * @param {number} startedAt
+ * @param {number} [now]
+ */
+export function isShadowTimedOut(startedAt, now = Date.now()) {
+  return now - startedAt >= SHADOW_TIMEOUT_MS;
+}
+
+/**
+ * 复习会话队列：把需要重练的句子排成带「理由」的有序队列（可观测失败原因）。
+ * 理由取值：never-passed（从未通过）/ high-fail（高失败率）/ srs-due（SRS 到期）/ lapsed（有过失误）。
+ * @param {import('./data/scenes.js').Scene} scene
+ * @param {Record<string, LinePractice>} practiceStats
+ * @param {Record<string, { reps?: number, nextReview?: number, lapses?: number }>} srs
+ * @param {number} [now]
+ * @returns {{ lineIdx: number, reason: string, weight: number }[]}
+ */
+export function reviewQueue(scene, practiceStats, srs, now = Date.now()) {
+  const out = [];
+  for (let i = 0; i < scene.lines.length; i++) {
+    const id = srsIdForLine(scene.id, i);
+    const ps = practiceStats[id];
+    const st = srs[id];
+    const reasons = [];
+    let weight = 0;
+    if (!ps || ps.passes === 0) { reasons.push('never-passed'); weight += 3; }
+    if (ps && ps.attempts > 0) {
+      const rate = ps.fails / ps.attempts;
+      if (rate >= 0.5) { reasons.push('high-fail'); weight += 2; }
+    }
+    if (st && st.reps > 0 && st.nextReview <= now) { reasons.push('srs-due'); weight += 2; }
+    if (st?.lapses) { reasons.push('lapsed'); weight += st.lapses * 0.5; }
+    if (reasons.length) out.push({ lineIdx: i, reason: reasons.join(','), weight });
+  }
+  return out.sort((a, b) => b.weight - a.weight);
+}
+
+/**
+ * 错题本导出：汇总有失败记录的句子为可序列化的 JSON 数据（用于本地下载）。
+ * @param {Record<string, LinePractice>} practiceStats
+ * @param {import('./data/scenes.js').Scene[]} scenes
+ */
+export function exportMistakes(practiceStats, scenes) {
+  const mistakes = [];
+  for (const scene of scenes) {
+    for (let i = 0; i < scene.lines.length; i++) {
+      const id = srsIdForLine(scene.id, i);
+      const ps = practiceStats[id];
+      if (!ps || ps.fails === 0) continue;
+      const line = scene.lines[i];
+      const attempts = ps.attempts;
+      mistakes.push({
+        sceneId: scene.id,
+        sceneTitle: scene.titleZh,
+        lineIdx: i,
+        es: line.es,
+        zh: line.zh,
+        attempts,
+        fails: ps.fails,
+        passes: ps.passes,
+        failRate: attempts ? Number((ps.fails / attempts).toFixed(3)) : 0,
+        lastAt: ps.lastAt ?? null,
+      });
+    }
+  }
+  return mistakes.sort((a, b) => b.fails - a.fails || b.failRate - a.failRate);
+}
+
+/**
+ * 错题本导出为带元数据的 JSON 字符串（可直接下载）。
+ * @param {Record<string, LinePractice>} practiceStats
+ * @param {import('./data/scenes.js').Scene[]} scenes
+ * @param {number} [now]
+ */
+export function exportMistakesJson(practiceStats, scenes, now = Date.now()) {
+  const mistakes = exportMistakes(practiceStats, scenes);
+  return JSON.stringify({
+    app: 'juxixi',
+    exportedAt: new Date(now).toISOString(),
+    count: mistakes.length,
+    mistakes,
+  }, null, 2);
+}
