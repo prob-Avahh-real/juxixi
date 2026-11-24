@@ -71,3 +71,8 @@ credentials.json
 *.log
 Thumbs.db
 
+
+# Build, cache & secret exclusions
+.npm-cache/
+.build/
+.venv/
